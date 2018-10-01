@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/tls"
 	"encoding/base64"
+    "os"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -223,6 +224,14 @@ func (p Plugin) Exec() error {
 				return err
 			}
 
+        case *corev1.Secret:
+            secretSet := clientset.CoreV1().Secrets(p.Config.Namespace)
+            err := applySecret(o, secretSet)
+
+            if err != nil {
+                return err
+            }
+
 		// extensionsv1beta1
 		case *extensionsv1beta1.DaemonSet:
 			daemonSetSet := clientset.ExtensionsV1beta1().DaemonSets(p.Config.Namespace)
@@ -331,17 +340,28 @@ func (p Plugin) getTemplate() (string, error) {
 		}
 	} else {
 		fmt.Println("file")
-		file, err := filepath.Abs(p.Config.Template)
-		if err != nil {
-			log.Println("Error when getting template path")
-			return template, err
-		}
-		out, err := ioutil.ReadFile(file)
-		if err != nil {
-			log.Println("Error when reading template file")
-			return template, err
-		}
-		template = string(out)
+        fi, err := os.Stat(p.Config.Template)
+        if err != nil {
+            panic(err)
+        }
+
+        if fi.IsDir() {
+            fmt.Println("directory")
+        } else {
+            fmt.Println("file")
+            file, err := filepath.Abs(p.Config.Template)
+            if err != nil {
+            	log.Println("Error when getting template path")
+            	return template, err
+            }
+            out, err := ioutil.ReadFile(file)
+            if err != nil {
+            	log.Println("Error when reading template file")
+            	return template, err
+            }
+            template = string(out)
+            fmt.Println(template)
+        }
 	}
 
 	return RenderTrim(template, p)

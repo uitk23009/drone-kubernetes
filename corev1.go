@@ -218,6 +218,47 @@ func applyReplicationController(replicationController *corev1.ReplicationControl
 	}
 }
 
+func applySecret(secret *corev1.Secret, secretSet v1.SecretInterface) error {
+	secretName := secret.GetObjectMeta().GetName()
+	secrets, err := secretSet.List(metav1.ListOptions{})
+	if err != nil {
+		log.Println("Error when listing secrets")
+		return err
+	}
+
+	update := false
+	for _, sc := range secrets.Items {
+		if sc.GetObjectMeta().GetName() == secretName {
+			update = true
+		}
+	}
+
+	if update {
+		_, err := secretSet.Get(secretName, metav1.GetOptions{})
+		if err != nil {
+			log.Println("Error when getting old secret")
+			return err
+		}
+
+		_, err = secretSet.Update(secret)
+		if err != nil {
+			log.Println("Error when updating secret")
+		}
+		log.Println("Secret " + secretName + " updated")
+
+		return err
+	} else {
+		_, err := secretSet.Create(secret)
+		if err != nil {
+			log.Println("Error when creating secret")
+			return err
+		}
+
+		log.Println("Secret " + secretName + " created")
+		return err
+	}
+}
+
 func applyService(service *corev1.Service, serviceSet v1.ServiceInterface) error {
 	serviceName := service.GetObjectMeta().GetName()
 	services, err := serviceSet.List(metav1.ListOptions{})
