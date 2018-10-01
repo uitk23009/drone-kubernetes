@@ -357,9 +357,7 @@ func (p Plugin) getTemplate() (string, error) {
                 panic(err)
             }
             for _, filename := range files {
-                fmt.Println(filename)
                 file, err := filepath.Abs(filename)
-                fmt.Println(file)
                 if err != nil {
                     log.Println("Error when get dictionary file")
                     return template, err
