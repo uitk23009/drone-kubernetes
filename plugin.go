@@ -339,7 +339,6 @@ func (p Plugin) getTemplate() (string, error) {
 			template = string(out)
 		}
 	} else {
-		fmt.Println("file")
         fi, err := os.Stat(p.Config.Template)
         if err != nil {
             panic(err)
@@ -347,14 +346,46 @@ func (p Plugin) getTemplate() (string, error) {
 
         if fi.IsDir() {
             fmt.Println("directory")
+            var files []string
+            err := filepath.Walk(p.Config.Template, func(path string, info os.FileInfo, err error) error {
+                if !info.IsDir() {
+                    files = append(files, path)
+                }
+                return nil
+            })
+            if err != nil {
+                panic(err)
+            }
+            for _, filename := range files {
+                fmt.Println(filename)
+                file, err := filepath.Abs(filename)
+                fmt.Println(file)
+                if err != nil {
+                    log.Println("Error when get dictionary file")
+                    return template, err
+                }
+                out, err := ioutil.ReadFile(file)
+                if err != nil {
+                    log.Println("Error when reading dictionary file")
+                    return template, err
+                }
+                template += string(out)
+                if filename != files[len(files) - 1] {
+                    template += "---\n"
+                }
+                fmt.Println(template)
+            }
         } else {
             fmt.Println("file")
+            fmt.Println(p.Config.Template)
             file, err := filepath.Abs(p.Config.Template)
+            fmt.Println(file)
             if err != nil {
             	log.Println("Error when getting template path")
             	return template, err
             }
             out, err := ioutil.ReadFile(file)
+            fmt.Println(out)
             if err != nil {
             	log.Println("Error when reading template file")
             	return template, err
