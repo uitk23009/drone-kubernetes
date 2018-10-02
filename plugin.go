@@ -16,6 +16,7 @@ import (
 	appsv1beta1 "k8s.io/api/apps/v1beta1"
 	appsv1beta2 "k8s.io/api/apps/v1beta2"
 	corev1 "k8s.io/api/core/v1"
+    storagev1 "k8s.io/api/storage/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 
 	"k8s.io/client-go/kubernetes"
@@ -232,6 +233,16 @@ func (p Plugin) Exec() error {
                 return err
             }
 
+        // storagev1
+        case *storagev1.StorageClass:
+            storageSet := clientset.StorageV1().StorageClasses()
+            err := applyStorageClass(o, storageSet)
+
+            if err != nil {
+                return err
+            }
+
+
 		// extensionsv1beta1
 		case *extensionsv1beta1.DaemonSet:
 			daemonSetSet := clientset.ExtensionsV1beta1().DaemonSets(p.Config.Namespace)
@@ -375,15 +386,12 @@ func (p Plugin) getTemplate() (string, error) {
             }
         } else {
             fmt.Println("file")
-            fmt.Println(p.Config.Template)
             file, err := filepath.Abs(p.Config.Template)
-            fmt.Println(file)
             if err != nil {
             	log.Println("Error when getting template path")
             	return template, err
             }
             out, err := ioutil.ReadFile(file)
-            fmt.Println(out)
             if err != nil {
             	log.Println("Error when reading template file")
             	return template, err
