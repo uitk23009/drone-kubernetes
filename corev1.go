@@ -281,7 +281,12 @@ func applyService(service *corev1.Service, serviceSet v1.ServiceInterface) error
 			return err
 		}
 
-		_, err = serviceSet.Update(service)
+        err = serviceSet.Delete(serviceName, &metav1.DeleteOptions{})
+        if err != nil {
+			log.Println("Error when deleting service")
+			return err
+        }
+		_, err = serviceSet.Create(service)
 		if err != nil {
 			log.Println("Error when updating service")
 			return err
